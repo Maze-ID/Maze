@@ -20,6 +20,7 @@ module.exports = {
     // for local dev environment
     "blast-local": {
       url: "http://localhost:8545",
+      blockGasLimit: 40000000,
     },
   },
   defaultNetwork: "blast-local",

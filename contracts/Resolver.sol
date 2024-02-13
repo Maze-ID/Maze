@@ -15,8 +15,7 @@ contract Resolver {
     }
 
     function setAddr(bytes32 domain, address _address) external returns(bool) {
-        address owner = maze.ownerOf(uint256(domain));
-        require(msg.sender == owner || msg.sender == address(maze));
+        require(msg.sender == address(maze) || msg.sender == maze.ownerOf(uint256(domain)));
         store[domain] = _address;
         return true;
     }
