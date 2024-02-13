@@ -106,7 +106,9 @@ describe("Maze contract", function () {
       expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.be.equal(
         this.refundPrice
       );
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(addr1.address);
+      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+        addr1.address
+      );
     });
 
     it("should be able to rent without refund available domain", async function () {
@@ -142,44 +144,49 @@ describe("Maze contract", function () {
       await ethers.provider.send("evm_increaseTime", [secondsInMonth]);
     });
 
-    it("User not be able to refund before ttl", async function() {
-      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be.reverted;
-      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be.reverted;
-    })
+    it("User not be able to refund before ttl", async function () {
+      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be
+        .reverted;
+      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be
+        .reverted;
+    });
 
-    it("User be able to refund between ttl and grace_period", async function() {
+    it("User be able to refund between ttl and grace_period", async function () {
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth;
       await ethers.provider.send("evm_increaseTime", [secondsInMonth + 1]);
 
-
       const balanceBefore = await ethers.provider.getBalance(addr1.address);
-      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be.reverted;
+      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be
+        .reverted;
       await this.maze.connect(addr1).refundFull(DOMAIN_HASH);
-      expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(balanceBefore);
-
+      expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(
+        balanceBefore
+      );
 
       expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.equal(0);
       expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.equal(false);
       expect(await this.maze.getDomainTTL(DOMAIN_HASH)).to.equal(0);
-    })
+    });
 
-    it("User not able to refund full after grace period but able to refundHalf", async function() {
+    it("User not able to refund full after grace period but able to refundHalf", async function () {
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth;
       await ethers.provider.send("evm_increaseTime", [secondsInMonth * 2]);
 
-
       const balanceBefore = await ethers.provider.getBalance(addr1.address);
-      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be.reverted;
+      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be
+        .reverted;
       await this.maze.connect(addr1).refundHalf(DOMAIN_HASH);
-      expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(balanceBefore);
+      expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(
+        balanceBefore
+      );
       expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.equal(0);
       expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.equal(false);
       expect(await this.maze.getDomainTTL(DOMAIN_HASH)).to.equal(0);
-    })
+    });
   });
 
   describe("Rent domains after refund-rent", function () {
@@ -194,7 +201,9 @@ describe("Maze contract", function () {
       expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.be.equal(
         this.refundPrice
       );
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(addr1.address);
+      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+        addr1.address
+      );
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth * 2;
@@ -202,19 +211,31 @@ describe("Maze contract", function () {
       await ethers.provider.send("evm_increaseTime", [secondsInMonth]);
     });
 
-    it("Another User not be able to rent before ttl", async function() {
-      await expect(this.maze.connect(addr2).rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {value: this.refundPrice})).to.be.reverted;
-    })
+    it("Another User not be able to rent before ttl", async function () {
+      await expect(
+        this.maze
+          .connect(addr2)
+          .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+            value: this.refundPrice,
+          })
+      ).to.be.reverted;
+    });
 
-    it("User not able to rent between ttl and grace_period", async function() {
+    it("User not able to rent between ttl and grace_period", async function () {
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth;
       await ethers.provider.send("evm_increaseTime", [secondsInMonth + 1]);
-      await expect(this.maze.connect(addr2).rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {value: this.refundPrice})).to.be.reverted;
-    })
+      await expect(
+        this.maze
+          .connect(addr2)
+          .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+            value: this.refundPrice,
+          })
+      ).to.be.reverted;
+    });
 
-    it("User able to rent right after refund from domain owner", async function() {
+    it("User able to rent right after refund from domain owner", async function () {
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth;
@@ -222,33 +243,46 @@ describe("Maze contract", function () {
 
       const balanceBefore = await ethers.provider.getBalance(addr1.address);
       await this.maze.connect(addr1).refundFull(DOMAIN_HASH);
-      expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(balanceBefore);
+      expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(
+        balanceBefore
+      );
 
-      await this.maze.connect(addr2).rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {value: this.refundPrice});
+      await this.maze
+        .connect(addr2)
+        .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+          value: this.refundPrice,
+        });
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr2.address);
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(addr2.address);
-    })
+      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+        addr2.address
+      );
+    });
 
-    it("User able to rent right after ttl + grace_period", async function() {
+    it("User able to rent right after ttl + grace_period", async function () {
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth;
-      await ethers.provider.send("evm_increaseTime", [secondsInMonth  * 2]);
-
+      await ethers.provider.send("evm_increaseTime", [secondsInMonth * 2]);
 
       const balance1Before = await ethers.provider.getBalance(addr1.address);
 
-      await this.maze.connect(addr2).rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {value: this.refundPrice});
-
+      await this.maze
+        .connect(addr2)
+        .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+          value: this.refundPrice,
+        });
 
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr2.address);
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(addr2.address);
-      expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(balance1Before);
-
-    })
+      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+        addr2.address
+      );
+      expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(
+        balance1Before
+      );
+    });
   });
 
-  describe("Refund after non-refund rent", function() {
+  describe("Refund after non-refund rent", function () {
     beforeEach(async function () {
       await this.maze
         .connect(addr1)
@@ -268,32 +302,37 @@ describe("Maze contract", function () {
       await ethers.provider.send("evm_increaseTime", [secondsInMonth]);
     });
 
-    it("User not be able to refund before ttl", async function() {
-      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be.reverted;
-      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be.reverted;
-    })
+    it("User not be able to refund before ttl", async function () {
+      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be
+        .reverted;
+      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be
+        .reverted;
+    });
 
-    it("User not able to refund between ttl and grace_period", async function() {
+    it("User not able to refund between ttl and grace_period", async function () {
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth;
       await ethers.provider.send("evm_increaseTime", [secondsInMonth + 1]);
 
-      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be.reverted;
-      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be.reverted;
-    })
+      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be
+        .reverted;
+      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be
+        .reverted;
+    });
 
-    it("User not able to refund full after grace period and not able to refundHalf", async function() {
+    it("User not able to refund full after grace period and not able to refundHalf", async function () {
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth;
       await ethers.provider.send("evm_increaseTime", [secondsInMonth * 2]);
 
-      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be.reverted;
-      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be.reverted;
-      
-    })
-  })
+      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be
+        .reverted;
+      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be
+        .reverted;
+    });
+  });
 
   describe("Rent domains after non Refund-rent", function () {
     beforeEach(async function () {
@@ -307,7 +346,9 @@ describe("Maze contract", function () {
       expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.be.equal(
         this.nonRefundPrice
       );
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(addr1.address);
+      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+        addr1.address
+      );
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth * 2;
@@ -315,38 +356,63 @@ describe("Maze contract", function () {
       await ethers.provider.send("evm_increaseTime", [secondsInMonth]);
     });
 
-    it("Another User not be able to rent before ttl", async function() {
-      await expect(this.maze.connect(addr2).rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {value: this.refundPrice})).to.be.reverted;
-    })
+    it("Another User not be able to rent before ttl", async function () {
+      await expect(
+        this.maze
+          .connect(addr2)
+          .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+            value: this.refundPrice,
+          })
+      ).to.be.reverted;
+    });
 
-    it("Another User not able to rent between ttl and grace_period", async function() {
+    it("Another User not able to rent between ttl and grace_period", async function () {
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth;
       await ethers.provider.send("evm_increaseTime", [secondsInMonth + 1]);
-      await expect(this.maze.connect(addr2).rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {value: this.refundPrice})).to.be.reverted;
-    })
+      await expect(
+        this.maze
+          .connect(addr2)
+          .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+            value: this.refundPrice,
+          })
+      ).to.be.reverted;
+    });
 
-    it("User able to rent right after ttl + grace_period", async function() {
+    it("User able to rent right after ttl + grace_period", async function () {
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth;
-      await ethers.provider.send("evm_increaseTime", [secondsInMonth  * 2]);
-
+      await ethers.provider.send("evm_increaseTime", [secondsInMonth * 2]);
 
       const balance1Before = await ethers.provider.getBalance(addr1.address);
 
-      await this.maze.connect(addr2).rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {value: this.refundPrice});
-
+      await this.maze
+        .connect(addr2)
+        .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+          value: this.refundPrice,
+        });
 
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr2.address);
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(addr2.address);
-      expect(await ethers.provider.getBalance(addr1.address)).to.be.equal(balance1Before);
+      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+        addr2.address
+      );
+      expect(await ethers.provider.getBalance(addr1.address)).to.be.equal(
+        balance1Before
+      );
+    });
+  });
 
-    })
+  describe("Check Metadata", function () {
+    it("Should return correct metadata", async function () {
+      expect(await this.maze.tokenURI(1)).to.be.equal(
+        "ipfs://QmREqDUAYtvoURZw1rKK2mSYyNban7GzxqqCju7SVvRkod"
+      );
+    });
   });
   // TO-DO
-  describe("Renew refund Domain", function() {
+  describe("Renew refund Domain", function () {
     beforeEach(async function () {
       await this.maze
         .connect(addr1)
@@ -358,12 +424,14 @@ describe("Maze contract", function () {
       expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.be.equal(
         this.refundPrice
       );
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(addr1.address);
+      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+        addr1.address
+      );
       const secondsInDay = 86400;
       const daysInMonth = 30;
       const secondsInMonth = secondsInDay * daysInMonth * 2;
 
       await ethers.provider.send("evm_increaseTime", [secondsInMonth]);
     });
-  }) 
-})
+  });
+});

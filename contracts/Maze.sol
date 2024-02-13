@@ -4,10 +4,15 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "contracts/interfaces/IBlast.sol";
 import {Resolver} from "./Resolver.sol";
 import "hardhat/console.sol";
 import {Pricer} from "./Pricer.sol";
+
+interface IBlast {
+     function configureClaimableYield() external;
+
+     function configureGovernor(address _governor) external;
+}
 
 contract Maze is ERC721, Ownable, ReentrancyGuard {
     struct Domain {
@@ -15,7 +20,6 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
         uint256 value;
         uint256 length;
     }
-
     mapping(bytes32 => Domain) private domainInformation;
     mapping(uint256 => uint256) private expiries;
     uint256 public grace_period = 15 days;
@@ -43,8 +47,8 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
 
 
     constructor(address _pricer) ERC721("MazeID", "MAZE") Ownable(msg.sender) {
-        //IBlast(0x4300000000000000000000000000000000000002).configureClaimableYield();
-        //IBlast(0x4300000000000000000000000000000000000002).configureGovernor(msg.sender)
+        IBlast(0x4300000000000000000000000000000000000002).configureClaimableYield();
+        IBlast(0x4300000000000000000000000000000000000002).configureGovernor(msg.sender);
         pricer = Pricer(_pricer);
     }
 
@@ -289,6 +293,11 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
         require(success1 && success2, "Refund Failed");
         emit HalfDomainRefunded(domain, fullRefundValue); // Вызов события возврата средств
     }
-
+    function _baseURI() internal pure override returns(string memory) {
+        return "ipfs://QmREqDUAYtvoURZw1rKK2mSYyNban7GzxqqCju7SVvRkod";
+    }
+    function tokenURI(uint256 tokenId) public pure override returns(string memory) {
+        return _baseURI();
+    }
     receive() external payable {}
 }

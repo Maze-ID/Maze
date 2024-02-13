@@ -1,33 +1,38 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-const hre = require("hardhat");
+const { ethers } = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+  console.log("Starting deployment...\n");
 
-  const lockedAmount = hre.ethers.parseEther("0.001");
+  const pricer = await ethers.getContractFactory("Pricer");
+  const deployedPricer = await pricer.deploy();
+  await deployedPricer.waitForDeployment();
+  console.log(`🚀 Pricer was deployed to: ${deployedPricer.target}`);
+  console.log(`👤 Pricer owner: ${await deployedPricer.owner()}\n`);
 
-  const lock = await hre.ethers.deployContract("Lock", [unlockTime], {
-    value: lockedAmount,
-  });
+  const maze = await ethers.getContractFactory("Maze");
+  const deployedMaze = await maze.deploy(deployedPricer.target);
+  await deployedMaze.waitForDeployment();
+  console.log(`🚀 Maze was deployed to: ${deployedMaze.target}`);
+  console.log(`👤 Maze owner: ${await deployedMaze.owner()}`);
+  console.log(`🔗 Maze pricer is set to: ${await deployedMaze.pricer()}\n`);
 
-  await lock.waitForDeployment();
+  const resolver = await ethers.getContractFactory("Resolver");
+  const deployedResolver = await resolver.deploy(deployedMaze.target);
+  await deployedResolver.waitForDeployment();
+  console.log(`🚀 Resolver was deployed to: ${deployedResolver.target}`);
+  console.log(`👤 Resolver owner: ${await deployedResolver.owner()}`);
+  console.log(`🔗 Resolver maze is set to: ${await deployedResolver.maze()}\n`);
 
-  console.log(
-    `Lock with ${ethers.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
-  );
+  await deployedMaze.setResolver(deployedResolver.target);
+  console.log(`🔄 Maze resolver is updated to: ${await deployedMaze.resolver()}\n`);
+
+  console.log("Deployment completed successfully!");
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error("Deployment failed with error:", error);
+    process.exit(1);
+  });
+
