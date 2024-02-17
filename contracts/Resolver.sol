@@ -5,7 +5,8 @@ import {Maze} from "./Maze.sol";
 contract Resolver {
     Maze public maze;
     address public owner;
-    mapping(bytes32 => address) store;
+    mapping(uint256 => address) public store;
+    mapping(address => string) private reverseStore;
 
     constructor(address payable _maze) {
         maze = Maze(_maze);
@@ -17,13 +18,18 @@ contract Resolver {
         maze = Maze(newMaze);
     }
 
-    function getAddr(bytes32 domain) external view returns(address) {
+    function getAddr(uint256 domain) external view returns(address) {
         return store[domain];
     }
 
-    function setAddr(bytes32 domain, address _address) external returns(bool) {
+    function getDomain(uint256 domain) external view returns(string memory) {
+        return reverseStore[store[domain]];
+    }
+
+    function setAddr(uint256 domain, address _address, string memory str) external returns(bool) {
         require(msg.sender == address(maze) || msg.sender == maze.ownerOf(uint256(domain)));
         store[domain] = _address;
+        reverseStore[_address] = str;
         return true;
     }
 }

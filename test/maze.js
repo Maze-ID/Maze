@@ -10,7 +10,6 @@ describe("Maze contract", function () {
   let addr2;
   const DOMAIN_NAME = "123";
   const duration = 3;
-  const DOMAIN_HASH = ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_NAME));
   const DOMAIN_NUMBER = ethers.toBigInt(
     ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_NAME))
   );
@@ -91,22 +90,22 @@ describe("Maze contract", function () {
   describe("Renting domains from address(0)", function () {
     beforeEach(async function () {
       await expect(this.maze.ownerOf(DOMAIN_NUMBER)).to.be.reverted;
-      expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.equal(0);
-      expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.equal(false);
+      expect(await this.maze.getDomainValue(DOMAIN_NUMBER)).to.equal(0);
+      expect(await this.maze.isDomainRefund(DOMAIN_NUMBER)).to.equal(false);
     });
 
     it("should be able to rent with refund available domain", async function () {
       await this.maze
         .connect(addr1)
-        .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+        .rentWithRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
           value: this.refundPrice,
         });
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr1.address);
-      expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.be.equal(true);
-      expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.be.equal(
+      expect(await this.maze.isDomainRefund(DOMAIN_NUMBER)).to.be.equal(true);
+      expect(await this.maze.getDomainValue(DOMAIN_NUMBER)).to.be.equal(
         this.refundPrice
       );
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+      expect(await this.resolver.getAddr(DOMAIN_NUMBER)).to.be.equal(
         addr1.address
       );
     });
@@ -114,12 +113,12 @@ describe("Maze contract", function () {
     it("should be able to rent without refund available domain", async function () {
       await this.maze
         .connect(addr1)
-        .rentWithoutRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+        .rentWithoutRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
           value: this.nonRefundPrice,
         });
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr1.address);
-      expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.be.equal(false);
-      expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.be.equal(
+      expect(await this.maze.isDomainRefund(DOMAIN_NUMBER)).to.be.equal(false);
+      expect(await this.maze.getDomainValue(DOMAIN_NUMBER)).to.be.equal(
         this.nonRefundPrice
       );
     });
@@ -129,12 +128,12 @@ describe("Maze contract", function () {
     beforeEach(async function () {
       await this.maze
         .connect(addr1)
-        .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+        .rentWithRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
           value: this.refundPrice,
         });
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr1.address);
-      expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.be.equal(true);
-      expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.be.equal(
+      expect(await this.maze.isDomainRefund(DOMAIN_NUMBER)).to.be.equal(true);
+      expect(await this.maze.getDomainValue(DOMAIN_NUMBER)).to.be.equal(
         this.refundPrice
       );
       const secondsInDay = 86400;
@@ -145,9 +144,9 @@ describe("Maze contract", function () {
     });
 
     it("User not be able to refund before ttl", async function () {
-      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be
+      await expect(this.maze.connect(addr1).refundFull(DOMAIN_NUMBER)).to.be
         .reverted;
-      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be
+      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_NUMBER)).to.be
         .reverted;
     });
 
@@ -158,16 +157,16 @@ describe("Maze contract", function () {
       await ethers.provider.send("evm_increaseTime", [secondsInMonth + 1]);
 
       const balanceBefore = await ethers.provider.getBalance(addr1.address);
-      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be
+      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_NUMBER)).to.be
         .reverted;
-      await this.maze.connect(addr1).refundFull(DOMAIN_HASH);
+      await this.maze.connect(addr1).refundFull(DOMAIN_NUMBER);
       expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(
         balanceBefore
       );
 
-      expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.equal(0);
-      expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.equal(false);
-      expect(await this.maze.getDomainTTL(DOMAIN_HASH)).to.equal(0);
+      expect(await this.maze.getDomainValue(DOMAIN_NUMBER)).to.equal(0);
+      expect(await this.maze.isDomainRefund(DOMAIN_NUMBER)).to.equal(false);
+      expect(await this.maze.getDomainTTL(DOMAIN_NUMBER)).to.equal(0);
     });
 
     it("User not able to refund full after grace period but able to refundHalf", async function () {
@@ -177,15 +176,15 @@ describe("Maze contract", function () {
       await ethers.provider.send("evm_increaseTime", [secondsInMonth * 2]);
 
       const balanceBefore = await ethers.provider.getBalance(addr1.address);
-      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be
+      await expect(this.maze.connect(addr1).refundFull(DOMAIN_NUMBER)).to.be
         .reverted;
-      await this.maze.connect(addr1).refundHalf(DOMAIN_HASH);
+      await this.maze.connect(addr1).refundHalf(DOMAIN_NUMBER);
       expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(
         balanceBefore
       );
-      expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.equal(0);
-      expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.equal(false);
-      expect(await this.maze.getDomainTTL(DOMAIN_HASH)).to.equal(0);
+      expect(await this.maze.getDomainValue(DOMAIN_NUMBER)).to.equal(0);
+      expect(await this.maze.isDomainRefund(DOMAIN_NUMBER)).to.equal(false);
+      expect(await this.maze.getDomainTTL(DOMAIN_NUMBER)).to.equal(0);
     });
   });
 
@@ -193,15 +192,15 @@ describe("Maze contract", function () {
     beforeEach(async function () {
       await this.maze
         .connect(addr1)
-        .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+        .rentWithRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
           value: this.refundPrice,
         });
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr1.address);
-      expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.be.equal(true);
-      expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.be.equal(
+      expect(await this.maze.isDomainRefund(DOMAIN_NUMBER)).to.be.equal(true);
+      expect(await this.maze.getDomainValue(DOMAIN_NUMBER)).to.be.equal(
         this.refundPrice
       );
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+      expect(await this.resolver.getAddr(DOMAIN_NUMBER)).to.be.equal(
         addr1.address
       );
       const secondsInDay = 86400;
@@ -215,7 +214,7 @@ describe("Maze contract", function () {
       await expect(
         this.maze
           .connect(addr2)
-          .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+          .rentWithRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
             value: this.refundPrice,
           })
       ).to.be.reverted;
@@ -229,7 +228,7 @@ describe("Maze contract", function () {
       await expect(
         this.maze
           .connect(addr2)
-          .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+          .rentWithRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
             value: this.refundPrice,
           })
       ).to.be.reverted;
@@ -242,18 +241,18 @@ describe("Maze contract", function () {
       await ethers.provider.send("evm_increaseTime", [secondsInMonth + 1]);
 
       const balanceBefore = await ethers.provider.getBalance(addr1.address);
-      await this.maze.connect(addr1).refundFull(DOMAIN_HASH);
+      await this.maze.connect(addr1).refundFull(DOMAIN_NUMBER);
       expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(
         balanceBefore
       );
 
       await this.maze
         .connect(addr2)
-        .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+        .rentWithRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
           value: this.refundPrice,
         });
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr2.address);
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+      expect(await this.resolver.getAddr(DOMAIN_NUMBER)).to.be.equal(
         addr2.address
       );
     });
@@ -268,12 +267,12 @@ describe("Maze contract", function () {
 
       await this.maze
         .connect(addr2)
-        .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+        .rentWithRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
           value: this.refundPrice,
         });
 
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr2.address);
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+      expect(await this.resolver.getAddr(DOMAIN_NUMBER)).to.be.equal(
         addr2.address
       );
       expect(await ethers.provider.getBalance(addr1.address)).to.be.greaterThan(
@@ -286,12 +285,12 @@ describe("Maze contract", function () {
     beforeEach(async function () {
       await this.maze
         .connect(addr1)
-        .rentWithoutRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+        .rentWithoutRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
           value: this.nonRefundPrice,
         });
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr1.address);
-      expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.be.equal(false);
-      expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.be.equal(
+      expect(await this.maze.isDomainRefund(DOMAIN_NUMBER)).to.be.equal(false);
+      expect(await this.maze.getDomainValue(DOMAIN_NUMBER)).to.be.equal(
         this.nonRefundPrice
       );
 
@@ -303,9 +302,9 @@ describe("Maze contract", function () {
     });
 
     it("User not be able to refund before ttl", async function () {
-      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be
+      await expect(this.maze.connect(addr1).refundFull(DOMAIN_NUMBER)).to.be
         .reverted;
-      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be
+      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_NUMBER)).to.be
         .reverted;
     });
 
@@ -315,9 +314,9 @@ describe("Maze contract", function () {
       const secondsInMonth = secondsInDay * daysInMonth;
       await ethers.provider.send("evm_increaseTime", [secondsInMonth + 1]);
 
-      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be
+      await expect(this.maze.connect(addr1).refundFull(DOMAIN_NUMBER)).to.be
         .reverted;
-      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be
+      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_NUMBER)).to.be
         .reverted;
     });
 
@@ -327,9 +326,9 @@ describe("Maze contract", function () {
       const secondsInMonth = secondsInDay * daysInMonth;
       await ethers.provider.send("evm_increaseTime", [secondsInMonth * 2]);
 
-      await expect(this.maze.connect(addr1).refundFull(DOMAIN_HASH)).to.be
+      await expect(this.maze.connect(addr1).refundFull(DOMAIN_NUMBER)).to.be
         .reverted;
-      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_HASH)).to.be
+      await expect(this.maze.connect(addr1).refundHalf(DOMAIN_NUMBER)).to.be
         .reverted;
     });
   });
@@ -338,15 +337,15 @@ describe("Maze contract", function () {
     beforeEach(async function () {
       await this.maze
         .connect(addr1)
-        .rentWithoutRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+        .rentWithoutRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
           value: this.nonRefundPrice,
         });
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr1.address);
-      expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.be.equal(false);
-      expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.be.equal(
+      expect(await this.maze.isDomainRefund(DOMAIN_NUMBER)).to.be.equal(false);
+      expect(await this.maze.getDomainValue(DOMAIN_NUMBER)).to.be.equal(
         this.nonRefundPrice
       );
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+      expect(await this.resolver.getAddr(DOMAIN_NUMBER)).to.be.equal(
         addr1.address
       );
       const secondsInDay = 86400;
@@ -360,7 +359,7 @@ describe("Maze contract", function () {
       await expect(
         this.maze
           .connect(addr2)
-          .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+          .rentWithRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
             value: this.refundPrice,
           })
       ).to.be.reverted;
@@ -374,7 +373,7 @@ describe("Maze contract", function () {
       await expect(
         this.maze
           .connect(addr2)
-          .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+          .rentWithRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
             value: this.refundPrice,
           })
       ).to.be.reverted;
@@ -390,12 +389,12 @@ describe("Maze contract", function () {
 
       await this.maze
         .connect(addr2)
-        .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+        .rentWithRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
           value: this.refundPrice,
         });
 
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr2.address);
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+      expect(await this.resolver.getAddr(DOMAIN_NUMBER)).to.be.equal(
         addr2.address
       );
       expect(await ethers.provider.getBalance(addr1.address)).to.be.equal(
@@ -416,15 +415,15 @@ describe("Maze contract", function () {
     beforeEach(async function () {
       await this.maze
         .connect(addr1)
-        .rentWithRefund(DOMAIN_HASH, duration, DOMAIN_NAME, {
+        .rentWithRefund(DOMAIN_NUMBER, duration, DOMAIN_NAME, {
           value: this.refundPrice,
         });
       expect(await this.maze.ownerOf(DOMAIN_NUMBER)).to.be.equal(addr1.address);
-      expect(await this.maze.isDomainRefund(DOMAIN_HASH)).to.be.equal(true);
-      expect(await this.maze.getDomainValue(DOMAIN_HASH)).to.be.equal(
+      expect(await this.maze.isDomainRefund(DOMAIN_NUMBER)).to.be.equal(true);
+      expect(await this.maze.getDomainValue(DOMAIN_NUMBER)).to.be.equal(
         this.refundPrice
       );
-      expect(await this.resolver.getAddr(DOMAIN_HASH)).to.be.equal(
+      expect(await this.resolver.getAddr(DOMAIN_NUMBER)).to.be.equal(
         addr1.address
       );
       const secondsInDay = 86400;

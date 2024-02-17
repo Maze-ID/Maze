@@ -16,29 +16,29 @@ interface IBlast {
 
 contract Maze is ERC721, Ownable, ReentrancyGuard {
     struct Domain {
+        string domainName;
         bool isRefund;
         uint256 value;
         uint256 length;
+        uint256 expiries;
     }
-    mapping(bytes32 => Domain) private domainInformation;
-    mapping(uint256 => uint256) private expiries;
+    mapping(uint256 => Domain) private domainInformation;
     uint256 public grace_period = 15 days;
     Resolver public resolver;
     Pricer public pricer;
 
-    event DomainRented(bytes32 indexed domain, address indexed owner, uint256 duration, bool isRefund, uint256 value);
-    event DomainRenewed(bytes32 indexed domain, uint256 duration, bool isRefund);
-    event FullDomainRefunded(bytes32 indexed domain, uint256 value);
-    event HalfDomainRefunded(bytes32 indexed domain, uint256 fullRefundValue);
+    event DomainRented(uint256 indexed domain, address indexed owner, string indexed domainName, uint256 duration, bool isRefund, uint256 value);
+    event DomainRenewed(uint256 indexed domain, uint256 duration, bool isRefund);
+    event FullDomainRefunded(uint256 indexed domain, uint256 value);
+    event HalfDomainRefunded(uint256 indexed domain, uint256 fullRefundValue);
 
 
-    modifier isDomainFree(bytes32 domain) {
-        uint256 id = uint256(domain);
+    modifier isDomainFree(uint256 domain) {
         require(
-            _ownerOf(id) == address(0) ||
+            _ownerOf(domain) == address(0) ||
                 (
-                    (_ownerOf(id) != address(0) &&
-                        expiries[id] + grace_period < block.timestamp)
+                    (_ownerOf(domain) != address(0) &&
+                        domainInformation[domain].expiries + grace_period < block.timestamp)
                 ),
             "Domain is not available"
         );
@@ -70,7 +70,7 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
 
     function ownerOf(uint256 tokenId) public view override returns (address) {
         require(
-            expiries[tokenId] + grace_period > block.timestamp,
+            domainInformation[tokenId].expiries + grace_period > block.timestamp,
             "Domain rent failed"
         );
         return super.ownerOf(tokenId);
@@ -78,7 +78,7 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
 
     // Function for renting a domain
     function rentWithRefund(
-        bytes32 domain,
+        uint256 domain,
         uint8 duration,
         string memory domainName
     )
@@ -93,7 +93,7 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
         uint256 price = pricer.calculatePrice(duration, true, domainBytes.length);
         require(msg.value == price, "Insufficient ether");
 
-        uint256 id = uint256(domain);
+        uint256 id = domain;
         uint256 valueToRefund;
         address previousOwner = _ownerOf(id);
         if (domainInformation[domain].isRefund) {
@@ -101,7 +101,8 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
         }
         domainInformation[domain].value = price;
         domainInformation[domain].length = domainBytes.length;
-        expiries[id] = block.timestamp + duration * 30 * (1 days);
+        domainInformation[domain].domainName = domainName;
+        domainInformation[domain].expiries= block.timestamp + duration * 30 * (1 days);
         mint(previousOwner, id);
 
         if (domainInformation[domain].isRefund) {
@@ -110,10 +111,9 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
             domainInformation[domain].isRefund = true;
         }
 
-        bool success1 = resolver.setAddr(domain, msg.sender);
+        bool success1 = resolver.setAddr(domain, msg.sender, domainName);
         require(success1, "transaction failed");
-        emit DomainRented(domain, msg.sender, duration, true, price); // Вызов события аренды
-
+        emit DomainRented(domain, msg.sender, domainName, duration, true, price);
     }
 
     function mint(address previousOwner, uint256 id) private {
@@ -126,7 +126,7 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
 
     // Function to buy Domain
     function rentWithoutRefund(
-        bytes32 domain,
+        uint256 domain,
         uint8 duration,
         string memory domainName
     ) public payable isDomainFree(domain) nonReentrant {
@@ -137,7 +137,7 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
         require(msg.value == price, "Insufficient ether");
 
 
-        uint256 id = uint256(domain);
+        uint256 id = domain;
         uint256 valueToRefund;
         address previousOwner = _ownerOf(id);
         if (domainInformation[domain].isRefund) {
@@ -145,7 +145,8 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
         }
         domainInformation[domain].value = price;
         domainInformation[domain].length = domainBytes.length;
-        expiries[id] = block.timestamp + duration * 30 * (1 days);
+        domainInformation[domain].domainName = domainName;
+        domainInformation[domain].expiries = block.timestamp + duration * 30 * (1 days);
         if (previousOwner == address(0)) {
             _mint(msg.sender, id);
         } else {
@@ -155,52 +156,55 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
             domainInformation[domain].isRefund = false;
             refundPartFromThirdFace(previousOwner, valueToRefund);
         }
-        bool success1 = resolver.setAddr(domain, msg.sender);
+        bool success1 = resolver.setAddr(domain, msg.sender, domainName);
         (bool success2, ) = payable(owner()).call{value: msg.value}("");
         require(success1 && success2, "transaction failed");
-        emit DomainRented(domain, msg.sender, duration, true, price);
+        emit DomainRented(domain, msg.sender, domainName, duration, true, price);
 
     }
 
-    function renew(bytes32 domain, uint8 duration, bool isRefund) external payable nonReentrant() {
-        uint256 id = uint256(domain);
+    function renew(uint256 domain, uint8 duration, bool isRefund) external payable nonReentrant() {
         require(duration > 0 && duration < 13, "Incorrect duration");
-        require(msg.sender == ownerOf(id), "You are not owner");
+        require(msg.sender == ownerOf(domain), "You are not owner");
         require(pricer.calculatePrice(duration, isRefund, domainInformation[domain].length) == msg.value, "Insuffient eth amount");
         if (isRefund) {
             domainInformation[domain].value += msg.value;
-            expiries[id] += duration * 30 * (1 days);
+            domainInformation[domain].expiries += duration * 30 * (1 days);
         } else {
-            expiries[id] += duration * 30 * (1 days);
+             domainInformation[domain].expiries += duration * 30 * (1 days);
             (bool success, ) = payable(owner()).call{value:msg.value}("");
             require(success);
         }
-        emit DomainRenewed(domain, duration, isRefund); // Вызов события продления аренды
+        emit DomainRenewed(domain, duration, isRefund);
 
     }
 
     // Function to get domain value
-    function getDomainValue(bytes32 domain) public view returns (uint256) {
+    function getDomainValue(uint256 domain) public view returns (uint256) {
         return domainInformation[domain].value;
     }
 
     // Function to check if domain is permanent
-    function isDomainRefund(bytes32 domain) public view returns (bool) {
+    function isDomainRefund(uint256 domain) public view returns (bool) {
         return domainInformation[domain].isRefund;
     }
 
     // Function to get domain TTL
-    function getDomainTTL(bytes32 domain) public view returns (uint256) {
-        return expiries[uint256(domain)];
+    function getDomainTTL(uint256 domain) public view returns (uint256) {
+        return  domainInformation[domain].expiries;
     }
 
-    function changeStoredAddress(bytes32 domain, address _address) private {
-        resolver.setAddr(domain, _address);
+    // Function to get domain TTL
+    function getDomainName(uint256 domain) public view returns (string memory) {
+        return domainInformation[domain].domainName;
     }
 
-    function refundFull(bytes32 domain) external nonReentrant {
-        uint256 id = uint256(domain);
-        address domainOwner = _ownerOf(id);
+    function changeStoredAddress(uint256 domain, address _address) private {
+        resolver.setAddr(domain, _address, domainInformation[domain].domainName);
+    }
+
+    function refundFull(uint256 domain) external nonReentrant {
+        address domainOwner = _ownerOf(domain);
         require(
             domainOwner != address(0) && domainOwner == msg.sender,
             "Only owner can refund full price in refund period"
@@ -210,16 +214,14 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
             "Domain is not available for refund"
         );
         require(
-            expiries[id] < block.timestamp &&
-                expiries[id] + grace_period >= block.timestamp,
+            domainInformation[domain].expiries < block.timestamp &&
+                domainInformation[domain].expiries + grace_period >= block.timestamp,
             "You cant refund all funds"
         );
-        bool success1 = resolver.setAddr(domain, address(0));
+        bool success1 = resolver.setAddr(domain, address(0), domainInformation[domain].domainName);
         require(success1);
         uint256 refundValue = domainInformation[domain].value;
-        domainInformation[domain].value = 0;
-        domainInformation[domain].isRefund = false;
-        expiries[id] = 0;
+        resetDomain(domain);
         (bool success, ) = payable(domainOwner).call{
             value: refundValue
         }("");
@@ -230,10 +232,9 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
 
     function validateDomain(bytes memory domainBytes) pure private returns (bool) {
         if (domainBytes.length == 0 || domainBytes.length > 16) {
-            return false; // Проверка длины
+            return false;
         }
         for (uint i = 0; i < domainBytes.length; i++) {
-            // Проверка на допустимые символы: латинские буквы, цифры и дефис
             bytes1 char = domainBytes[i];
             if (!((char >= 0x30 && char <= 0x39) || (char >= 0x61 && char <= 0x7A))) {
                 return false;
@@ -257,9 +258,8 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
         require(success1 && success2 && success3, "Refund Failed");
     }
 
-    function refundHalf(bytes32 domain) external nonReentrant {
-        uint256 id = uint256(domain);
-        address domainOwner = _ownerOf(id);
+    function refundHalf(uint256 domain) external nonReentrant {
+        address domainOwner = _ownerOf(domain);
         require(
             msg.sender == domainOwner || msg.sender == owner(),
             "Not eligible to refund"
@@ -273,15 +273,13 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
             "Domain is not available for refund"
         );
         require(
-            expiries[id] + grace_period < block.timestamp,
+            domainInformation[domain].expiries + grace_period < block.timestamp,
             "You cant refund part funds"
         );
-        bool success3 = resolver.setAddr(domain, address(0));
+        bool success3 = resolver.setAddr(domain, address(0), domainInformation[domain].domainName);
         require(success3);
         uint256 fullRefundValue = domainInformation[domain].value;
-        domainInformation[domain].value = 0;
-        domainInformation[domain].isRefund = false;
-        expiries[id] = 0;
+        resetDomain(domain);
         (bool success1, ) = payable(domainOwner).call{
             value: fullRefundValue / 2
         }("");
@@ -292,6 +290,13 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
 
         require(success1 && success2, "Refund Failed");
         emit HalfDomainRefunded(domain, fullRefundValue); // Вызов события возврата средств
+    }
+
+    function resetDomain(uint256 domain) private {
+        domainInformation[domain].value = 0;
+        domainInformation[domain].isRefund = false;
+        domainInformation[domain].expiries = 0;
+        domainInformation[domain].domainName = "";
     }
     function _baseURI() internal pure override returns(string memory) {
         return "ipfs://QmREqDUAYtvoURZw1rKK2mSYyNban7GzxqqCju7SVvRkod";
