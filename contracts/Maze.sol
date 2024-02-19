@@ -184,7 +184,7 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
         return domainInformation[domain].value;
     }
 
-    // Function to check if domain is permanent
+    // Function to check if domain is refund
     function isDomainRefund(uint256 domain) public view returns (bool) {
         return domainInformation[domain].isRefund;
     }
@@ -194,7 +194,7 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
         return  domainInformation[domain].expiries;
     }
 
-    // Function to get domain TTL
+    // Function to get domain Name
     function getDomainName(uint256 domain) public view returns (string memory) {
         return domainInformation[domain].domainName;
     }

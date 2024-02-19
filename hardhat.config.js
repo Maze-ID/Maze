@@ -5,6 +5,21 @@ require("solidity-coverage");
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.20",
+  etherscan: {
+    apiKey: {
+      blast_sepolia: "blast_sepolia", // apiKey is not required, just set a placeholder
+    },
+    customChains: [
+      {
+        network: "blast_sepolia",
+        chainId: 168587773,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/testnet/evm/168587773/etherscan",
+          browserURL: "https://testnet.blastscan.io"
+        }
+      }
+    ]
+  },
   networks: {
     // for mainnet
     "blast-mainnet": {
@@ -12,7 +27,7 @@ module.exports = {
       accounts: [process.env.MAINNET_PRIVATE_KEY],
     },
     // for Sepolia testnet
-    "blast-sepolia": {
+    "blast_sepolia": {
       url: "https://sepolia.blast.io",
       accounts: [process.env.TESTNET_PRIVATE_KEY],
     },
