@@ -9,9 +9,17 @@ async function main() {
   console.log(`🚀 Pricer was deployed to: ${deployedPricer.target}`);
   console.log(`👤 Pricer owner: ${await deployedPricer.owner()}\n`);
 
+
+  const payment = await ethers.getContractFactory("PaymentProcessor");
+  const deployedPayment = await payment.deploy(deployedPricer.target);
+  await deployedPayment.waitForDeployment();
+  console.log(`🚀 Payment was deployed to: ${deployedPayment.target}`);
+
+
   const maze = await ethers.getContractFactory("Maze");
-  const deployedMaze = await maze.deploy(deployedPricer.target);
+  const deployedMaze = await maze.deploy(deployedPayment.target);
   await deployedMaze.waitForDeployment();
+
   console.log(`🚀 Maze was deployed to: ${deployedMaze.target}`);
   console.log(`👤 Maze owner: ${await deployedMaze.owner()}`);
   console.log(`🔗 Maze pricer is set to: ${await deployedMaze.pricer()}\n`);
