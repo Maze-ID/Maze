@@ -22,7 +22,7 @@ async function main() {
 
   console.log(`🚀 Maze was deployed to: ${deployedMaze.target}`);
   console.log(`👤 Maze owner: ${await deployedMaze.owner()}`);
-  console.log(`🔗 Maze pricer is set to: ${await deployedMaze.pricer()}\n`);
+  console.log(`🔗 Maze payer is set to: ${await deployedMaze.payment()}\n`);
 
   const resolver = await ethers.getContractFactory("Resolver");
   const deployedResolver = await resolver.deploy(deployedMaze.target);

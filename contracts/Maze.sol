@@ -71,16 +71,15 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
     }
 
     constructor(
-        address _payment,
-        address payable _treasury
+        address _payment
     ) ERC721("MazeID", "MAZE") Ownable(msg.sender) {
-        // IBlast(0x4300000000000000000000000000000000000002)
-        //     .configureClaimableYield();
-        // IBlast(0x4300000000000000000000000000000000000002).configureGovernor(
-        //     msg.sender
-        // );
+        IBlast(0x4300000000000000000000000000000000000002)
+            .configureClaimableYield();
+        IBlast(0x4300000000000000000000000000000000000002).configureGovernor(
+            msg.sender
+        );
         payment = PaymentProcessor(_payment);
-        treasury = _treasury;
+        treasury = payable(msg.sender);
     }
 
     // Function to change the grace period
@@ -113,10 +112,6 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
     }
 
     function setTreasury(address payable _treasury) public onlyOwner {
-        treasury = _treasury;
-    }
-
-    function setTreasurys(address payable _treasury) public onlyOwner {
         treasury = _treasury;
     }
 
