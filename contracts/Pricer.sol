@@ -22,8 +22,8 @@ contract Pricer {
         lengthMultipliers[3] = 125;
         lengthMultipliers[4] = 115;
         lengthMultipliers[5] = 110;
-        prices.noRefundPricePerMonth = 0.001 ether;
-        prices.refundPricePerMonth = 0.003 ether;
+        prices.noRefundPricePerMonth = 0.0005 ether;
+        prices.refundPricePerMonth = 0.001 ether;
     }
 
     modifier onlyOwner() {
