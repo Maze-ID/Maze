@@ -73,11 +73,11 @@ contract Maze is ERC721, Ownable, ReentrancyGuard {
     constructor(
         address _payment
     ) ERC721("MazeID", "MAZE") Ownable(msg.sender) {
-        IBlast(0x4300000000000000000000000000000000000002)
-            .configureClaimableYield();
-        IBlast(0x4300000000000000000000000000000000000002).configureGovernor(
-            msg.sender
-        );
+        // IBlast(0x4300000000000000000000000000000000000002)
+        //     .configureClaimableYield();
+        // IBlast(0x4300000000000000000000000000000000000002).configureGovernor(
+        //     msg.sender
+        // );
         payment = PaymentProcessor(_payment);
         treasury = payable(msg.sender);
     }

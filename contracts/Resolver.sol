@@ -7,6 +7,7 @@ contract Resolver {
     address public owner;
     mapping(uint256 => address) private store;
     mapping(address => string) private reverseStore;
+    address claim_owner;
 
     constructor(address payable _maze) {
         maze = Maze(_maze);
@@ -17,6 +18,8 @@ contract Resolver {
         require(msg.sender == owner);
         maze = Maze(newMaze);
     }
+
+    function transferOwnership(address new_owner)
 
     function getAddr(uint256 domain) external view returns(address) {
         return store[domain];

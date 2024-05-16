@@ -1,6 +1,8 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 require("solidity-coverage");
+require("hardhat-gas-reporter");
+
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -23,7 +25,7 @@ module.exports = {
   networks: {
     // for mainnet
     "blast-mainnet": {
-      url: "coming end of February",
+      url: "https://rpc.ankr.com/blast",
       accounts: [process.env.MAINNET_PRIVATE_KEY],
     },
     // for Sepolia testnet
@@ -41,6 +43,11 @@ module.exports = {
         "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
       ], // hardhat keys
     },
+  },
+  gasReporter: {
+    currency: 'EUR',
+    L1: "polygon",
+    coinmarketcap: "abc123...",
   },
   defaultNetwork: "blast-local",
 };

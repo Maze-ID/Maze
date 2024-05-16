@@ -3,21 +3,9 @@ const { ethers } = require("hardhat");
 async function main() {
   console.log("Starting deployment...\n");
 
-  const pricer = await ethers.getContractFactory("Pricer");
-  const deployedPricer = await pricer.deploy();
-  await deployedPricer.waitForDeployment();
-  console.log(`🚀 Pricer was deployed to: ${deployedPricer.target}`);
-  console.log(`👤 Pricer owner: ${await deployedPricer.owner()}\n`);
-
-
-  const payment = await ethers.getContractFactory("PaymentProcessor");
-  const deployedPayment = await payment.deploy(deployedPricer.target);
-  await deployedPayment.waitForDeployment();
-  console.log(`🚀 Payment was deployed to: ${deployedPayment.target}`);
-
 
   const maze = await ethers.getContractFactory("Maze");
-  const deployedMaze = await maze.deploy(deployedPayment.target);
+  const deployedMaze = await maze.deploy("0x506AaF55c7F49940fB27b223d8d070266E78aCfe");
   await deployedMaze.waitForDeployment();
 
   console.log(`🚀 Maze was deployed to: ${deployedMaze.target}`);

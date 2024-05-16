@@ -33,8 +33,7 @@ describe("Maze contract", function () {
     );
     Maze = await ethers.getContractFactory("Maze", owner);
     this.maze = await Maze.deploy(
-      await this.payment.getAddress(),
-      owner.address
+      await this.payment.getAddress()
     );
     Resolver = await ethers.getContractFactory("Resolver", owner);
     this.resolver = await Resolver.deploy(await this.maze.getAddress());
